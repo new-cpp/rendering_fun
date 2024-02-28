@@ -155,8 +155,9 @@ struct Game
   void update();
   void render();
   void close();
-  void setFPS(ui32);
-  bool is_running()const { return m_running;}
+
+  void controlFPS();
+  bool isRunning()const { return m_running;}
 
 };
 
@@ -222,30 +223,20 @@ void Game::update()
 
 void Game::render()
   {
-    //fps check
-    auto now = SDL_GetTicks();
 
-
-    if(m_next_game_step <= now)
-      {
-        SDL_SetRenderDrawColor(m_render,0xff,0xff,0xff,0xff);
+        SDL_SetRenderDrawColor(m_render,0xff,0xff,0xff,SDL_ALPHA_OPAQUE);
         SDL_RenderClear(m_render);
 
         //draw
         m_entity.render(m_render);
-        SDL_SetRenderDrawColor(m_render, 0,0,0,0xff);
+        SDL_SetRenderDrawColor(m_render, 0,0,0,SDL_ALPHA_OPAQUE);
         SDL_RenderDrawLine(m_render,0,HEIGHT/2, WIDTH, HEIGHT/2);
         SDL_RenderDrawLine(m_render,WIDTH/2,0, WIDTH/2, HEIGHT);
 
         SDL_RenderPresent(m_render);
 
-       m_next_game_step += SCREEN_TICKS_PER_FRAME;
-      }
-    else
-      {
-         SDL_Delay(m_next_game_step - now);
-      }
 
+    
   }
 
 void Game::close()
@@ -263,8 +254,19 @@ void Game::close()
   }
 
 
-void Game::setFPS(ui32 fps)
+void Game::controlFPS()
   {
+    //fps check
+    auto now = SDL_GetTicks();
+    if(m_next_game_step>now)
+      {
+        SDL_Delay(m_next_game_step - now);
+      }
+    else
+      {
+         m_next_game_step += SCREEN_TICKS_PER_FRAME;
+      }
+
 
   }
 auto main(int argc, char *argv[]) -> int {
@@ -273,9 +275,9 @@ auto main(int argc, char *argv[]) -> int {
   Game game;
 
   game.init();
-  game.setFPS(60);
-  while(game.is_running())
+  while(game.isRunning())
     {
+      game.controlFPS();
       game.input();
       game.update();
       game.render();
